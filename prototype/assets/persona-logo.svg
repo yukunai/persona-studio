@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Persona Studio logo">
+  <defs>
+    <linearGradient id="mark-bg" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#191D27"/>
+      <stop offset="1" stop-color="#090A0D"/>
+    </linearGradient>
+    <linearGradient id="mark-line" x1="14" y1="14" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8C6FFF"/>
+      <stop offset="1" stop-color="#60D5BD"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#mark-bg)"/>
+  <rect x="5.5" y="5.5" width="53" height="53" rx="14.5" fill="none" stroke="#FFFFFF" stroke-opacity=".14" stroke-width="1.5"/>
+  <path d="M16 48V16" stroke="url(#mark-line)" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="34" y="40" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" font-size="22" font-weight="800" letter-spacing="-1" fill="#F4F6FB">PS</text>
+  <circle cx="48" cy="19" r="3.2" fill="#60D5BD"/>
+</svg>

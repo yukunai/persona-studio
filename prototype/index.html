@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Persona Studio 角色系统</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <div class="brand">
+          <img class="brand-logo" src="./assets/persona-logo.svg" alt="" aria-hidden="true" />
+          <strong>Persona Studio</strong>
+        </div>
+        <nav class="top-nav" aria-label="Primary">
+          <button class="nav-item active" type="button" data-nav="首页">首页</button>
+          <button class="nav-item" type="button" data-nav="项目">项目</button>
+          <button class="nav-item" type="button" data-nav="探索">探索</button>
+          <button class="nav-item" type="button" data-nav="我的作品">我的作品</button>
+          <button class="nav-item" type="button" data-nav="模型广场">模型广场</button>
+        </nav>
+        <div class="account-strip">
+          <button class="icon-button" id="exportProjectButton" type="button" aria-label="导出当前项目">
+            <span>导出</span>
+          </button>
+          <span class="credit-pill">1200</span>
+          <button class="upgrade-button" type="button">升级</button>
+          <span class="avatar" aria-label="User avatar"></span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="side-panel" aria-label="角色控制">
+          <div class="mode-tabs">
+            <button class="tab active" type="button" data-mode="文生图">文生图</button>
+            <button class="tab" type="button" data-mode="图生图">图生图</button>
+            <button class="tab" type="button" data-mode="局部重绘">局部重绘</button>
+          </div>
+
+          <section class="panel-section mode-context-panel" id="modeContextPanel" hidden></section>
+
+          <section class="panel-section prompt-panel">
+            <div class="field-head">
+              <label for="promptInput">提示词</label>
+              <button class="ghost-action" id="clearPromptButton" type="button">清空</button>
+            </div>
+            <textarea id="promptInput" maxlength="2000">一个年轻的亚洲女性，柔和的自然光，户外公园，微风吹动头发，清新自然的氛围，写真摄影风格，50mm 镜头，浅景深</textarea>
+            <div class="prompt-foot">
+              <span><output id="promptCount">0</output>/2000</span>
+              <span class="prompt-tools">
+                <button class="secondary-button" id="optimizePrompt" type="button">AI 优化</button>
+                <button class="secondary-button" id="randomPrompt" type="button">随机提示词</button>
+              </span>
+            </div>
+
+            <div class="field-head">
+              <label for="negativePromptInput">反向提示词</label>
+              <button class="ghost-action" id="clearNegativeButton" type="button">清空</button>
+            </div>
+            <textarea id="negativePromptInput" class="compact-textarea" maxlength="2000">模糊，低质量，畸形，过曝，变形，噪点，多余手指，脸部漂移</textarea>
+            <div class="prompt-foot">
+              <span><output id="negativeCount">0</output>/2000</span>
+            </div>
+          </section>
+
+          <section class="panel-section generation-control-panel control-bar" aria-label="生成控制">
+            <div class="generation-submit">
+              <button class="generate-button" id="generateButton" type="button">生成 (4)</button>
+              <button class="secondary-button preflight-button" id="preflightButton" type="button">生成预检</button>
+              <span class="cost-line">消耗 8</span>
+              <p class="api-status" id="apiStatus" aria-live="polite">原型已就绪</p>
+            </div>
+            <label class="control-field model-field">
+              <span>模型</span>
+              <select id="modelSelect">
+                <option value="fal-ai/flux-pro/v1.1-ultra">fal.ai · FLUX 1.1 Pro Ultra</option>
+                <option value="flux-2-max">FLUX · FLUX.2 Max</option>
+                <option value="stable-image-ultra">Stable Diffusion · Stable Image Ultra</option>
+                <option value="midjourney-v8.1">Midjourney · V8.1</option>
+                <option value="gpt-image-1.5">OpenAI · GPT-Image-1.5</option>
+                <option value="gemini-3.1-flash-image">Google Imagen · Nano Banana 2</option>
+                <option value="wan2.6-image">通义万象 · Wan2.6 Image</option>
+                <option value="glm-image">智谱 AI · GLM-Image</option>
+                <option value="doubao-seedream-5-0-260128">火山引擎 · Seedream 5.0</option>
+                <option value="kling-v3">可灵 AI · Kling v3</option>
+                <option value="wenxin-yige-sft">文心一格 · 精调模型</option>
+              </select>
+            </label>
+            <fieldset class="segmented">
+              <legend>尺寸</legend>
+              <label><input type="radio" name="size" value="1:1" />1:1</label>
+              <label><input type="radio" name="size" value="3:4" checked />3:4</label>
+              <label><input type="radio" name="size" value="4:3" />4:3</label>
+              <label><input type="radio" name="size" value="16:9" />16:9</label>
+              <label><input type="radio" name="size" value="9:16" />9:16</label>
+            </fieldset>
+            <fieldset class="segmented">
+              <legend>数量</legend>
+              <label><input type="radio" name="count" value="1" />1</label>
+              <label><input type="radio" name="count" value="2" />2</label>
+              <label><input type="radio" name="count" value="4" checked />4</label>
+              <label><input type="radio" name="count" value="8" />8</label>
+            </fieldset>
+            <button class="advanced-button" id="advancedToggle" type="button" aria-expanded="false">高级设置</button>
+            <div class="advanced-panel" id="advancedPanel" hidden>
+              <label class="control-field">
+                <span>状态</span>
+                <select id="stateSelect">
+                  <option>calm</option>
+                  <option>confident</option>
+                  <option>playful</option>
+                </select>
+              </label>
+              <label class="control-field">
+                <span>姿态</span>
+                <select id="poseControlSelect">
+                  <option value="auto">自动</option>
+                  <option value="front">正面</option>
+                  <option value="three-quarter">四分之三侧脸</option>
+                  <option value="side">侧脸</option>
+                  <option value="reference_pose">参考姿态</option>
+                </select>
+              </label>
+              <label class="control-field range-field">
+                <span>身份</span>
+                <output id="identityValue">0.80</output>
+                <input id="identityRange" type="range" min="0.55" max="0.95" value="0.8" step="0.01" />
+              </label>
+              <label class="control-field range-field">
+                <span>风格</span>
+                <output id="styleValue">0.60</output>
+                <input id="styleRange" type="range" min="0.2" max="0.85" value="0.6" step="0.01" />
+              </label>
+              <button class="secondary-button fusion-diagnose-button" id="fusionDiagnoseButton" type="button">融合诊断</button>
+              <div class="fusion-panel" id="fusionPanel" hidden></div>
+            </div>
+          </section>
+
+          <section class="panel-section face-card character-detail">
+            <div class="section-title">
+              <span>参考图（人脸）</span>
+              <button class="toggle-button is-on" id="referenceToggle" type="button" aria-pressed="true">
+                <span>启用</span>
+              </button>
+            </div>
+            <div class="active-character">
+              <span class="row-thumb large"></span>
+              <span>
+                <strong id="characterName">Lina</strong>
+                <small>角色系统 · <span id="versionBadge">v1</span> · 一致性 <span id="consistencyScore">92%</span> · <span id="lastUsedBadge">未使用</span></small>
+              </span>
+            </div>
+            <div class="character-list compact" id="characterList"></div>
+            <div class="identity-strip" aria-label="身份预览">
+              <button class="face-reference active" type="button" data-ref="主图" data-reference-kind="face" data-reference-id="face-main" data-reference-label="主图">
+                <img src="./assets/persona-ref-1.png" alt="身份参考脸 1" />
+                <span>主图</span>
+                <span class="replace-reference" data-action="replace-reference">替换</span>
+              </button>
+              <button class="face-reference" type="button" data-ref="侧脸" data-reference-kind="face" data-reference-id="face-side" data-reference-label="侧脸">
+                <img src="./assets/persona-ref-2.png" alt="身份参考脸 2" />
+                <span class="replace-reference" data-action="replace-reference">替换</span>
+              </button>
+              <button class="face-reference add-face" type="button">+</button>
+            </div>
+            <div class="identity-readiness" id="identityReadiness" aria-live="polite"></div>
+            <label class="range-row">
+              <span>相似度权重</span>
+              <output id="detailIdentityValue">0.85</output>
+              <input id="detailIdentity" type="range" min="0.55" max="0.95" value="0.85" step="0.01" />
+            </label>
+            <div class="button-row">
+              <button class="secondary-button" id="faceEnhanceButton" type="button">人脸增强</button>
+              <button class="secondary-button" id="preserveFeaturesButton" type="button">保持五官</button>
+            </div>
+            <div class="button-row asset-actions">
+              <button class="secondary-button" id="createCharacterButton" type="button">新建角色</button>
+              <button class="secondary-button" id="editCharacterButton" type="button">编辑资料</button>
+              <button class="secondary-button" id="trainMoreButton" type="button">继续训练</button>
+              <button class="secondary-button" id="versionHistoryButton" type="button">版本历史</button>
+            </div>
+          </section>
+
+          <section class="panel-section style-section">
+            <div class="section-title">
+              <span>风格</span>
+              <button class="ghost-action" id="moreStylesButton" type="button" aria-expanded="false" aria-haspopup="dialog">更多风格</button>
+            </div>
+            <div class="style-grid" id="stylePresetGrid" aria-label="风格预设">
+              <button class="style-swatch active" type="button" data-style="写真"><span class="swatch-image realistic"></span><span>写真</span></button>
+              <button class="style-swatch" type="button" data-style="摄影"><span class="swatch-image photo"></span><span>摄影</span></button>
+              <button class="style-swatch" type="button" data-style="商业广告" data-extra-style><span class="swatch-image commercial-ad"></span><span>商业广告</span></button>
+              <button class="style-swatch" type="button" data-style="商业海报" data-extra-style><span class="swatch-image commercial-poster"></span><span>商业海报</span></button>
+              <button class="style-swatch" type="button" data-style="动漫"><span class="swatch-image anime"></span><span>动漫</span></button>
+              <button class="style-swatch" type="button" data-style="插画"><span class="swatch-image illustration"></span><span>插画</span></button>
+              <button class="style-swatch" type="button" data-style="3D" data-extra-style><span class="swatch-image render3d"></span><span>3D</span></button>
+              <button class="style-swatch" type="button" data-style="美剧" data-extra-style><span class="swatch-image drama"></span><span>美剧</span></button>
+              <button class="style-swatch" type="button" data-style="国风" data-extra-style><span class="swatch-image guofeng"></span><span>国风</span></button>
+              <button class="style-swatch" type="button" data-style="治愈" data-extra-style><span class="swatch-image healing"></span><span>治愈</span></button>
+            </div>
+            <div class="lora-panel">
+              <div class="section-title">
+                <span>LoRA</span>
+                <small id="loraBadge">人像一致性</small>
+              </div>
+              <label class="control-field">
+                <span>适配器</span>
+                <select id="loraSelect">
+                  <option value="portrait-consistency">人像一致性</option>
+                </select>
+              </label>
+              <label class="range-row">
+                <span>LoRA 权重</span>
+                <output id="loraValue">0.72</output>
+                <input id="loraRange" type="range" min="0" max="1" value="0.72" step="0.01" />
+              </label>
+            </div>
+            <div class="style-pills" id="stylePills">
+              <span>电影人像</span>
+              <span>柔和日光</span>
+              <span>50mm 镜头</span>
+            </div>
+            <button class="secondary-button style-inspect-button" id="styleInspectButton" type="button">风格资产</button>
+            <div class="memory-list">
+              <span>清晨咖啡馆</span>
+              <span>雨夜街道</span>
+              <span>棚拍头像</span>
+            </div>
+            <div class="memory-insights" id="memoryInsights" aria-label="角色记忆洞察"></div>
+          </section>
+
+          <section class="profile-center" aria-label="个人中心">
+            <button class="profile-button" id="accountCenterButton" type="button">
+              <span class="avatar mini" aria-hidden="true"></span>
+              <span>
+                <strong>个人中心</strong>
+                <small id="profileApiStatus">API 未配置</small>
+              </span>
+            </button>
+          </section>
+        </aside>
+
+        <section class="account-popover" id="accountPopover" aria-label="个人中心设置" hidden>
+          <div class="account-popover-head">
+            <strong>个人中心</strong>
+            <button class="icon-button" id="closeAccountPopover" type="button" aria-label="关闭个人中心">×</button>
+          </div>
+          <div id="accountPopoverBody"></div>
+        </section>
+
+        <section class="generation-area" aria-label="生成工作区">
+          <div class="workspace-header">
+            <div>
+              <h1>生成结果</h1>
+            </div>
+            <div class="view-actions">
+              <label class="check-row">
+                <input type="checkbox" id="favoritesOnly" />
+                <span>仅看收藏</span>
+              </label>
+              <select id="sortSelect" aria-label="生成结果排序">
+                <option>最新生成</option>
+                <option>一致性最高</option>
+                <option>收藏优先</option>
+              </select>
+              <button class="icon-button active" id="gridViewButton" type="button" aria-label="网格视图">▦</button>
+              <button class="icon-button" id="listViewButton" type="button" aria-label="列表视图">☰</button>
+            </div>
+          </div>
+
+          <div class="generation-notice" id="generationNotice" role="status" aria-live="assertive" hidden>
+            <strong>等待生成</strong>
+            <span>新生成图片会显示在这里</span>
+          </div>
+
+          <section class="workspace-mode-panel" id="workspaceModePanel" hidden></section>
+
+          <div class="output-grid" id="outputGrid">
+            <article class="image-tile">
+              <img src="./assets/persona-ref-1.png" alt="清晨公园生成图" />
+              <div class="tile-actions">
+                <button type="button" data-action="reuse">复用</button>
+                <button type="button" data-action="lock">锁脸+</button>
+                <button type="button" data-action="remix">变体</button>
+              </div>
+            </article>
+            <article class="image-tile tone-cool">
+              <img src="./assets/persona-ref-2.png" alt="花园小路生成图" />
+              <div class="tile-actions">
+                <button type="button" data-action="reuse">复用</button>
+                <button type="button" data-action="lock">锁脸+</button>
+                <button type="button" data-action="remix">变体</button>
+              </div>
+            </article>
+            <article class="image-tile tone-river">
+              <img src="./assets/persona-ref-3.png" alt="河边生成图" />
+              <div class="tile-actions">
+                <button type="button" data-action="reuse">复用</button>
+                <button type="button" data-action="lock">锁脸+</button>
+                <button type="button" data-action="remix">变体</button>
+              </div>
+            </article>
+            <article class="image-tile tone-garden">
+              <img src="./assets/persona-ref-4.png" alt="花园生成图" />
+              <div class="tile-actions">
+                <button type="button" data-action="reuse">复用</button>
+                <button type="button" data-action="lock">锁脸+</button>
+                <button type="button" data-action="remix">变体</button>
+              </div>
+            </article>
+          </div>
+
+          <section class="reference-rail" aria-label="Reference images">
+            <div class="section-title">
+              <span>参考图</span>
+              <small id="referenceRailHint">人脸一致性参考</small>
+            </div>
+            <div class="reference-kind-tabs" id="referenceKindTabs" aria-label="参考类型">
+              <button class="active" type="button" data-reference-kind="face">人脸</button>
+              <button type="button" data-reference-kind="outfit">服装</button>
+              <button type="button" data-reference-kind="accessory">配饰</button>
+              <button type="button" data-reference-kind="scene">环境</button>
+            </div>
+            <div class="reference-list">
+              <button class="reference-card active" type="button" data-reference-kind="face">
+                <img src="./assets/persona-ref-1.png" alt="Reference face selected" />
+                <span>主图</span>
+              </button>
+              <button class="reference-card" type="button" data-reference-kind="face">
+                <img src="./assets/persona-ref-2.png" alt="Reference face second" />
+              </button>
+              <button class="reference-card" type="button" data-reference-kind="face">
+                <img src="./assets/persona-ref-3.png" alt="Reference face third" />
+              </button>
+              <button class="reference-card" type="button" data-reference-kind="face">
+                <img src="./assets/persona-ref-4.png" alt="Reference face fourth" />
+              </button>
+              <button class="reference-card add-reference" type="button">+</button>
+            </div>
+          </section>
+        </section>
+      </main>
+      <div class="image-detail-overlay" id="imageDetailOverlay" hidden>
+        <section class="image-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="imageDetailTitle">
+          <div class="image-detail-media">
+            <img id="detailImage" src="./assets/persona-ref-1.png" alt="生成图详情" />
+          </div>
+          <div class="image-detail-body">
+            <div class="section-title">
+              <div>
+                <strong id="imageDetailTitle">生成图详情</strong>
+                <small id="detailMeta">Lina · v1 · 漂移低</small>
+              </div>
+              <button class="icon-button" id="closeImageDetail" type="button" aria-label="关闭详情">×</button>
+            </div>
+            <div class="button-row image-detail-actions" aria-label="生成图操作">
+              <button class="secondary-button" id="detailDownloadButton" type="button">下载</button>
+              <button class="secondary-button" id="detailFavoriteButton" type="button">收藏</button>
+              <button class="secondary-button" id="detailReuseButton" type="button">复用提示词</button>
+              <button class="secondary-button" id="detailLockButton" type="button">锁脸加强</button>
+              <button class="secondary-button" id="detailCanvasEditButton" type="button">画布修改</button>
+              <button class="secondary-button" id="detailRemixButton" type="button">生成变体</button>
+              <button class="secondary-button danger-button" id="detailDeleteButton" type="button">删除</button>
+            </div>
+            <section class="canvas-edit-panel" id="canvasEditPanel" hidden>
+              <div class="canvas-edit-toolbar">
+                <div>
+                  <strong>画布修改</strong>
+                  <small id="canvasEditHint">在图上涂抹要修改的区域</small>
+                </div>
+                <button class="secondary-button" id="canvasClearButton" type="button">清除标记</button>
+              </div>
+              <canvas id="canvasEditCanvas" width="420" height="560" tabindex="0" aria-label="局部修改画布"></canvas>
+              <label class="field-stack" for="canvasEditInstruction">
+                <span>修改说明</span>
+                <textarea id="canvasEditInstruction" maxlength="500" rows="3" placeholder="例如：去掉左上角路牌，保留人物脸、衣服和整体光线"></textarea>
+              </label>
+              <button class="primary-button" id="canvasSubmitEditButton" type="button">提交修改</button>
+            </section>
+            <dl class="detail-list">
+              <div>
+                <dt>提示词</dt>
+                <dd id="detailPrompt"></dd>
+              </div>
+              <div>
+                <dt>反向提示词</dt>
+                <dd id="detailNegativePrompt"></dd>
+              </div>
+              <div>
+                <dt>一致性</dt>
+                <dd id="detailConsistency"></dd>
+              </div>
+              <div>
+                <dt>质检</dt>
+                <dd id="detailQuality"></dd>
+              </div>
+              <div>
+                <dt>模型</dt>
+                <dd id="detailModelRoute"></dd>
+              </div>
+              <div>
+                <dt>任务</dt>
+                <dd id="detailJob"></dd>
+              </div>
+              <div>
+                <dt>参考</dt>
+                <dd id="detailReferenceGuidance"></dd>
+              </div>
+              <div>
+                <dt>条件包</dt>
+                <dd id="detailConditioning"></dd>
+              </div>
+              <div>
+                <dt>LoRA</dt>
+                <dd id="detailLora"></dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </div>
+      <div class="style-library-overlay" id="styleLibraryOverlay" hidden>
+        <section class="style-library-dialog" role="dialog" aria-modal="true" aria-labelledby="styleLibraryTitle">
+          <div class="style-library-head">
+            <div>
+              <strong id="styleLibraryTitle">风格库</strong>
+              <small>风格预览 · 参数 · LoRA</small>
+            </div>
+            <button class="icon-button" id="closeStyleLibrary" type="button" aria-label="关闭风格库">×</button>
+          </div>
+          <div class="style-library-layout">
+            <div class="style-library-grid" id="styleLibraryGrid" aria-label="风格列表"></div>
+            <aside class="style-library-detail" id="styleLibraryDetail" aria-label="风格参数"></aside>
+          </div>
+        </section>
+      </div>
+      <input id="referenceUploadInput" type="file" accept="image/*" multiple hidden />
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
